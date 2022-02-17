@@ -1,0 +1,199 @@
+---
+title: "Testing Raser"
+output:
+  html_notebook: default
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+# Global adm. boundaries
+[Using the package](https://www.gis-blog.com/r-raster-data-acquisition/) `raster` to get admin. boundaries data for
+Austria.
+
+```{r Setup}
+#install.packages("raster")
+library(raster)
+library(tidyverse)
+```
+-   installs and loads the package
+
+```{r getData}
+austria0 <- getData('GADM', country='AUT', level=0)
+```
+-   Arg_1 specifies data set
+    -   GDAM -- global administrative boundaries
+-   Arg_2 specifies country
+    -   Use ISO A3 country code
+-   Arg_3 specifies level of administrative subdivision
+    -   0 = country, 1 = state
+-   Above code returns country boundaries of Austria
+
+```{r Comparing}
+#Get Data
+austria0 <- getData('GADM' , country="AUT", level=0)
+austria1 <- getData('GADM' , country="AUT", level=1)
+
+#Plot
+par(mfcol = c(2,1))
+plot(austria0, main="Adm. Boundaries Austria Level 0")
+plot(austria1, main="Adm. Boundaries Austria Level 1")
+```
+-   Code prints Country and State borders for Austria
+-   mfrow fixed on pg 4 of (this pdf)[https://seananderson.ca/courses/11-multipanel/multipanel.pdf]
+
+# World Climate
+-   Similar process for world climate
+    -   Three arguments
+        -   Dataset (here, 'worldclim')
+        -   Variable (here, 'bio', but also ‘tmin’, ‘tmax’, ‘prec’)
+        -   Resolutaion (0.5, 2.5, 5, and 10 (minutes of a degree).)
+            -   res=0.5 requires lon + lat
+            
+```{r Climate}
+climate <- getData('worldclim', var='bio', res=2.5)
+```
+
+THIS RETURNS A LOT
+
+-   BIO1 = Annual Mean Temperature
+-   BIO2 = Mean Diurnal Range (Mean of monthly (max temp – min temp))
+-   BIO3 = Isothermality (BIO2/BIO7) (* 100)
+-   BIO4 = Temperature Seasonality (standard deviation *100)
+-   BIO5 = Max Temperature of Warmest Month
+-   BIO6 = Min Temperature of Coldest Month
+-   BIO7 = Temperature Annual Range (BIO5-BIO6)
+-   BIO8 = Mean Temperature of Wettest Quarter
+-   BIO9 = Mean Temperature of Driest Quarter
+-   BIO10 = Mean Temperature of Warmest Quarter
+-   BIO11 = Mean Temperature of Coldest Quarter
+-   BIO12 = Annual Precipitation
+-   BIO13 = Precipitation of Wettest Month
+-   BIO14 = Precipitation of Driest Month
+-   BIO15 = Precipitation Seasonality (Coefficient of Variation)
+-   BIO16 = Precipitation of Wettest Quarter
+-   BIO17 = Precipitation of Driest Quarter
+-   BIO18 = Precipitation of Warmest Quarter
+-   BIO19 = Precipitation of Coldest Quarter
+
+Tutorial goes on to plot the annual mean temp
+```{r Mean Temp}
+#Plot
+plot(climate$bio1, main="Annual Mean Temperature")
+```
+
+Lets sidebar and do `BIO5 = Max Temperature of Warmest Month`
+
+```{r Max Temp}
+#Plot
+plot(climate$bio5, main="Max Temperature of Warmest Month")
+```
+
+And BIO6 = Min Temperature of Coldest Month
+```{r Min Temp}
+#Plot
+plot(climate$bio6, main="Min Temperature of Coldest Month")
+```
+# SRTM 90 Elevation
+```{r SRTM}
+srtm <- getData('SRTM', lon=16, lat=48)
+```
+-   Arg_1: returns SRTM 90 data
+-   Lon: longitude
+-   Lat: latitude
+
+```{r Elev1}
+plot(srtm)
+plot(austria0, add=TRUE)
+```
+
+LMAO it's missing a bit of info. Need to tile pieces together.
+
+```{r Mosaic}
+# Download two more tiles
+srtm2 <- getData('SRTM', lon=13, lat=48)
+srtm3 <- getData('SRTM', lon=9, lat=48)
+
+#Mosaic/merge srtm tiles
+srtmmosaic <- mosaic(srtm, srtm2, srtm3, fun=mean)
+
+plot(srtmmosaic, main="Elevation (SRTM)")
+plot(austria0, add=TRUE)
+```
+
+
+# Testing with Greece
+```{r Greece}
+#Get Data
+greece0 <- getData('GADM' , country="GRC", level=0)
+greece1 <- getData('GADM' , country="GRC", level=1)
+
+#Plot
+#par(mfrow(2,1))s
+plot(greece0, main="Adm. Boundaries Greece Level 0")
+plot(greece1, main="Adm. Boundaries Greece Level 1")
+```
+
+
+
+
+```{r Test}
+# Download two more tiles
+#srtmGreece0 <- getData('SRTM', lon=23, lat=43)
+srtmGreece1 <- getData('SRTM', lon=23, lat=40)
+srtmGreece2 <- getData('SRTM', lon=25, lat=40)
+srtmGreece3 <- getData('SRTM', lon=25, lat=37)
+srtmGreece4 <- getData('SRTM', lon=23, lat=37)
+#srtm3 <- getData('SRTM', lon=9, lat=48)
+
+GreeceMosaic <- mosaic(#srtmGreece0,
+                       srtmGreece1,
+                       srtmGreece2,
+                       srtmGreece3,
+                       srtmGreece4,
+                       fun=mean)
+
+#plot(srtmmosaic, main="Elevation (SRTM)")
+plot(GreeceMosaic, main = "Elevation (SRTM)")
+
+```
+
+```{r}
+Elev <- as.data.frame(GreeceMosaic, xy=T)%>%drop_na()
+head(Elev)
+```
+```{r}
+#isobands(x=Elev$x,
+#         y=Elev$y,
+#         z=Elev$layer,
+#         levels_low=0,
+#         levels_high=3000)
+
+ggplot()+
+  geom_tile(data=Elev, aes(x=x,y=y,fill=layer))+
+  scale_color_gradient()+
+  theme_bw()
+```
+
+```{r doesnt work}
+Elev2 <- as.raster(srtmGreece1)
+
+isobands(x=Elev2[1,], y=Elev2[2,], z=Elev2[3,], levels_low = 0, levels_high = 3000)
+```
+
+```{r dialing in} 
+plot(srtmGreece1, main = "Elevation (SRTM)")
+```
+
+```{r southern greece}
+SGreece <- as.data.frame(srtmGreece1, xy=T, returnclass="sf") %>% drop_na()
+head(SGreece)
+```
+
+```{r}
+ggplot(data=SGreece)+
+  geom_tile(aes(x=x,y=y,fill=SGreece[,3]))+
+  scale_color_gradient()+
+  geom_sf(fill="transparent", data = SGreece)+ #fixes skew???
+  theme_bw()
+``
