@@ -16,8 +16,8 @@ IGno <- page %>% html_nodes("span.fullref > span") %>% html_text()
 
 ### GRAB PACKHUM REF -----------------------------------------------------------
 #textpage > div.docref
-PHno <- page %>% html_nodes('div.docref') %>% html_text()
-  PHno <- gsub("\\n", "", PHno)
+PHIno <- page %>% html_nodes('div.docref') %>% html_text()
+  PHIno <- gsub("\\n", "", PHIno)
   
 ### GRAB TEXT ------------------------------------------------------------------
 #textpage > div.text > div.greek.text-nowrap.dblclk > table
@@ -27,3 +27,9 @@ text <- page %>% html_nodes('div.greek.text-nowrap.dblclk') %>% html_text()
   text <- gsub("-", "", text)
   #ℎ PLANCK CONSTANT Unicode: U+210E, UTF-8: E2 84 8E
   text <- gsub("ℎ", "h", text)
+  
+### PRINT OUT ------------------------------------------------------------------
+print(IGbook)
+print(IGno)
+print(PHIno)
+print(text)

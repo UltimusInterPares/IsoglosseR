@@ -1,0 +1,127 @@
+---
+title: "Initial Project Notes"
+subtitle: "Scraping a Page"
+output: html_notebook
+---
+
+# First Draft
+-   I selected IG I<sup>2</sup> 1086 as the first inscription to be scraped
+-   It was very successful!
+
+```{r IG I2 1086}
+source("ScrapingPackhum/IG I2 1086.r")
+```
+
+-   Outputs are:
+    -   the book
+    -   the inscription number
+    -   the Packard Humanities internal reference number
+    -   the text
+    
+## Breakdown
+-   The script performs five distinct functions
+    -   Scraping the target website
+    -   Finding the book identifiers
+    -   Finding the PackHum identifier
+    -   Finding the text
+    -   Printing the output
+
+## 0) Setup
+The script as is calls two packages: `dplyr` and `rvest`.
+`dplyr` is used for data manipulation and `rvest` for web scraping.
+
+## 1) Target Website
+The script begins by turning the target website into the variable `link`.
+This is then passed through `read_html()`, which scrapes the target webpage.
+The output is stored as the variable (web)`page`.
+
+```{r GRAB PAGE, eval=FALSE, include=TRUE}
+### GRAB PAGE ------------------------------------------------------------------
+link <- 'https://inscriptions.packhum.org/text/1825?&bookid=3&location=1701'
+page <- read_html(link)
+```
+
+## 2) Book Identifiers
+The script then needs to store which inscription it is scraping.
+This info has two components: the volume of the Inscriptiones Graecae, and the
+inscription number.
+
+First, the volume. The command `html_nodes()` searches the `page` for the volume
+using its selector path. This is copied from the website using Safari's
+developer panel. The minimal selector path for this volume is
+`"span.fullref > a"`. This data is then cleaned of any html tags using
+`html_text()`. Escape characters, specifically the newline character `\n`, are
+removed using Regular Expression and the command `gsub()`. The clean text which
+results is stored as the variable `IGbook`.
+
+The inscription number is selected by the same method, using the selector path
+`"span.fullref > span"`. The data is stored as the variable `IGno`.
+
+```{r GRAB TEXT REF, eval=FALSE, include=TRUE}
+### GRAB TEXT REF --------------------------------------------------------------
+#textpage > div.hdr2 > span.fullref > a
+IGbook <- page %>% html_nodes("span.fullref > a") %>% html_text()
+  IGbook <- gsub("\\n", "", IGbook)
+  
+#textpage > div.hdr2 > span.fullref > span  
+IGno <- page %>% html_nodes("span.fullref > span") %>% html_text()
+  IGno <- gsub("\\n", "", IGno)
+```
+
+## 3) Packard Humanities Identifier
+Every inscription in the Packard Humanities Institute library includes a unique
+reference number. For the purposes of the study, this number fills two roles.
+First, since each number is unique, it may be used as a global identifier
+in contrast to the local identifiers found in §2. Every volume of the
+Inscriptiones Graecae will contain an inscription called 1, and 2, etc. These
+may be distinguished using the volume number, or by using the PHI inscription
+number. For example, the inscription IG I<sup>2</sup> 1086 is the only one with
+the PHI inscription number PH1825.
+
+Second, this reference number is included in the web address. See the link:
+
+```{r LINK CHECK, eval=FALSE, include=TRUE}
+link <- 'https://inscriptions.packhum.org/text/1825?&bookid=3&location=1701'
+```
+
+The number `1825` is indeed the PHI inscription number,
+with the prefix "PH" removed. The result is that this number may be used to
+systematically scrape every inscription from the PHI website. This idea is to
+be tested next.
+
+The PHI inscription number is grabbed in the same manner as `IGbook` and
+`IGno`, with the cleaned data stored as the variable `PHIno`.
+
+```{r GRAB PACKHUM REF, eval=FALSE, include=TRUE}
+### GRAB PACKHUM REF -----------------------------------------------------------
+#textpage > div.docref
+PHIno <- page %>% html_nodes('div.docref') %>% html_text()
+  PHIno <- gsub("\\n", "", PHIno)
+```
+
+## 4) The Inscription
+The inscription is scraped in the same manner as the past three variables.
+The major difference is in the cleaning step: the inscriptions often contain
+editorial marks which must be removed before any analysis.
+
+The list of marks to be removed will be updated as more arise.
+
+
+```{r GRAB TEXT, eval=FALSE, include=TRUE}
+### GRAB TEXT ------------------------------------------------------------------
+#textpage > div.text > div.greek.text-nowrap.dblclk > table
+text <- page %>% html_nodes('div.greek.text-nowrap.dblclk') %>% html_text()
+  text <- gsub("\\n", "", text)
+  text <- gsub("\\d", "", text)
+  text <- gsub("-", "", text)
+  #ℎ PLANCK CONSTANT Unicode: U+210E, UTF-8: E2 84 8E
+  text <- gsub("ℎ", "h", text)
+```
+
+# Second Draft
+The script currently prints the scraped data onto the console. This is fine when
+working with a single inscription, but will quickly become unusable when
+scraping more pages. The variables `IGbook`, `IGno`, `PHIno`, and `text` should
+be redefined as lists. 
+
+Since I'm planning ahead, I suppose I should wrap the scraping into functions.
