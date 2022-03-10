@@ -125,3 +125,12 @@ scraping more pages. The variables `IGbook`, `IGno`, `PHIno`, and `text` should
 be redefined as lists. 
 
 Since I'm planning ahead, I suppose I should wrap the scraping into functions.
+
+## Designing the Loop
+The Packard Humanities Reference Number is *also the identifying portion of the
+web address!* Everything after the ampsersand in the above address, 
+`https://inscriptions.packhum.org/text/1825?&bookid=3&location=1701`,
+is added while navigating through the website's tree of variables
+(volume, region, etc.). The script can therefore be built around a `for()` loop
+which α) builds a new variable for each loop and β) checks to ensure the
+resulting web address corresponds to a valid PHI Reference Number.
