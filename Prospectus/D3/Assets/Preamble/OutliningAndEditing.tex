@@ -1,0 +1,31 @@
+%%% Both Outlining And Editing
+% Margin Notes
+\usepackage{marginnote}
+    \reversemarginpar
+
+%%% General Outlining
+% counter for Outline Paragraphs and Margin Notes
+\newcounter{opara}[subsection] % Counts OParas - Resets every Section (SUBSECTION)
+\newcommand{\opara}[1]{\stepcounter{opara}\item[¶\theopara] #1} % Outline Paragraph
+
+\newcommand{\as}[1]{\item[As:] #1}
+\newcommand{\il}[1]{\item[Il:] #1}
+\newcommand{\an}[1]{\item[An:] #1}
+\newcommand{\onote}[1]{\marginnote{\textcolor{red}{¶\thesection.\theopara - #1}}} % Outline Note
+
+%%% General Editing
+% Counter for Draft Paragraphs and Margin Notes
+\newcounter{dpara}[section]
+\newcommand{\dpara}[1]{\stepcounter{dpara}\paragraph{\textcolor{red}{\bgroup\sffamily#1\egroup}}}
+\newcommand{\dnote}[1]{\marginnote{\textcolor{red}{\bgroup\sffamily¶\thesection.\thedpara\\ #1\egroup}}}
+
+% Missing Paragraph
+\usepackage{lipsum}
+    \newcommand{\missingpara}[1]{\dpara{#1}\dnote{Add #1}\textcolor{gray}{\bgroup\sffamily\lipsum[1]\egroup}}
+    
+% Things to be Edited
+\newcommand{\edit}[2]{\textcolor{red}{#1 [\bgroup\sffamily#2\egroup]}}
+
+% Cross Stuff Out
+\usepackage[normalem]{ulem}
+	\newcommand{\rxout}[1]{\textcolor{red}{\xout{\textcolor{black}{#1}}}}
