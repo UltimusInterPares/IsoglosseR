@@ -134,3 +134,63 @@ is added while navigating through the website's tree of variables
 (volume, region, etc.). The script can therefore be built around a `for()` loop
 which α) builds a new variable for each loop and β) checks to ensure the
 resulting web address corresponds to a valid PHI Reference Number.
+
+## The Function
+The loop is built around a function, currently called `TEST()`, which captures
+and organizes the data for us.
+
+```{r FUNCTION TEST, eval=FALSE, include=TRUE}
+TEST <- function(PHIno = 20) {
+  link <- paste('https://inscriptions.packhum.org/text/', PHIno, sep="")
+  page <- read_html(link)
+  
+  ### Text
+  #textpage > div.text > div.greek.text-nowrap.dblclk > table
+  text <- page %>% html_nodes('div.greek.text-nowrap.dblclk') %>% html_text()
+  text <- gsub("[\\d\\[\\]]", "", text, perl=T)
+  text <- gsub("(\\-\\n{1,})", "", text, perl=T)
+  text <- gsub("\\n{1,}", "", text, perl=T)
+  text <- gsub("\\s{1,}", " ", text, perl=T)
+  # ̣COMBINING DOT BELOW Unicode: U+0323, UTF-8: CC A3
+  text <- gsub("̣", "", text, perl=T)
+  text <- gsub("#", "", text, perl=T)
+  # ℎ PLANCK CONSTANT Unicode: U+210E, UTF-8: E2 84 8E
+  text <- gsub("ℎ", "h", text, perl=T)
+  
+  ### IGBook
+  #textpage > div.hdr2 > span.fullref > a
+  IGbook <- page %>% html_nodes("span.fullref > a") %>% html_text()
+  IGbook <- gsub("\\n", "", IGbook)
+  
+  ### IGNo
+  IGno <- page %>% html_nodes("span.fullref > span") %>% html_text()
+  IGno <- gsub("\\n", "", IGno)
+  
+  # Atm keeping for debugging
+  # print(link)
+  # print(text)
+  # print(IGbook)
+  # print(IGno)
+  # print(PHIno)
+  
+  # Make entry to be returned
+  entry <- c(IGbook, IGno, PHIno, text, link)
+  return(as.list(entry))
+  
+  # Atm keeping for debugging
+  # rm(link)
+  # rm(text)
+  # rm(IGbook)
+  # rm(IGno)
+  # rm(PHIno)
+}
+```
+
+This essentially encapsulates the contents of the first draft. The main
+differences are in the formatting changes (more notational marks to be removed)
+and how it handles the output. Rather than printing off variables to the
+terminal, the function creates a vector called `entry`, which it returns as a
+list for later processing. The target `PHIno` is now  also identified as an
+argument of the function. The default `PHIno` is 20 (IG I^3 20), because it's an
+eyesore and I'm a masochist. Or because I slammed it in at random. WHo's to say.
+
