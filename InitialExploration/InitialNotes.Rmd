@@ -194,3 +194,51 @@ list for later processing. The target `PHIno` is now  also identified as an
 argument of the function. The default `PHIno` is 20 (IG I^3 20), because it's an
 eyesore and I'm a masochist. Or because I slammed it in at random. WHo's to say.
 
+There are also a few test lines at the bottom that use the `TEST()` function in
+a `for()` loop to gather the first 100 inscriptions (by `PHIno`) from the
+PackHum website.
+
+```{r FIRST 100, eval=FALSE, include=TRUE}
+# df[row, column]
+test_df <- tibble(Book = NA, No = NA, Ref = NA, Text = NA, Link = NA)
+test_df[1,] <- TEST(1)
+test_df[2,] <- TEST(2)
+test_df[3,] <- TEST(3)
+
+for (i in c(1:100)) {
+  test_df[i,] <- TEST(i)
+}
+```
+
+```{r DISPLAY FIRST 100, echo=FALSE}
+head(test_df)
+```
+
+## Bad Selector Paths
+Now, trying to scan a non-existent page will obviously break things. An example
+from the draft:
+
+```{r BAD SELECTORS}
+# testing bad selector paths ---------------------------------------------------
+test_prime <- tibble(Book = NA, No = NA, Ref = NA, Text = NA, Link = NA)
+test_prime[1,] <- TEST(0)
+```
+
+Two solutions come to mind. 
+
+I could create a list of hypothetical selectors between 1 and the presumed
+highest `PHIno`, which I then systematically "ping" to find the rejects. Running
+`TEST(0)` will only return two outputs: the `IGbook` and the `link`.
+
+```{r BAD OUTPUTS}
+TEST(0)
+```
+
+This means there is certainly a path available where I run a `for()` loop, which
+tests all selectors between 1 and *n* and sets their `IGbook` output into a
+tibble. From there, any 0's can be dropped.
+
+There is also the option where I manually define the ranges which I intend to
+gather. This would avoid *scanning the Inscriptiones Graecae in its entirety*,
+but would raise the chances of missing potential data.
+
