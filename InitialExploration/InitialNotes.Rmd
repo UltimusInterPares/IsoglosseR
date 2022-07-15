@@ -4,6 +4,7 @@ subtitle: "Scraping a Page"
 output: html_notebook
 ---
 
+
 # First Draft
 -   I selected IG I<sup>2</sup> 1086 as the first inscription to be scraped
 -   It was very successful!
@@ -214,12 +215,12 @@ for (i in c(1:100)) {
 head(test_df)
 ```
 
-## Bad Selector Paths
+## Bad Links
 Now, trying to scan a non-existent page will obviously break things. An example
 from the draft:
 
-```{r BAD SELECTORS}
-# testing bad selector paths ---------------------------------------------------
+```{r BAD LINKS}
+# testing bad links ------------------------------------------------------------
 test_prime <- tibble(Book = NA, No = NA, Ref = NA, Text = NA, Link = NA)
 test_prime[1,] <- TEST(0)
 ```
@@ -241,4 +242,186 @@ tibble. From there, any 0's can be dropped.
 There is also the option where I manually define the ranges which I intend to
 gather. This would avoid *scanning the Inscriptiones Graecae in its entirety*,
 but would raise the chances of missing potential data.
+
+---
+
+After some thought, I'm of the opinion that I should use a function for link
+validation. Assuming the code works, a programmatic approach should
+outperform a manual search by every metric. This makes sense! It's a repetitive
+task that would normally take many long hours to complete. It's everything a
+computer excels at!
+
+What's more, the output of the loop could be used as the limiter for any
+`for()` loops, improving the function's control and reproducibility.
+
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-color:#93a1a1;border-spacing:0;margin:0px auto;}
+.tg td{background-color:#fdf6e3;border-color:#93a1a1;border-style:solid;border-width:1px;color:#002b36;
+  font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg th{background-color:#657b83;border-color:#93a1a1;border-style:solid;border-width:1px;color:#fdf6e3;
+  font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
+.tg .tg-baqh{text-align:center;vertical-align:top}
+.tg .tg-0lax{text-align:left;vertical-align:top}
+</style>
+<table class="tg">
+<thead>
+  <tr>
+    <th class="tg-0lax"></th>
+    <th class="tg-baqh">Automated</th>
+    <th class="tg-baqh">Manual</th>
+    <th class="tg-0lax">Assuming the code works …</th>
+  </tr>
+</thead>
+<tbody>
+  <tr>
+    <td class="tg-0lax">Time (Coding)</td>
+    <td class="tg-baqh">-</td>
+    <td class="tg-baqh">+</td>
+    <td class="tg-0lax">Manual isn't coded</td>
+  </tr>
+  <tr>
+    <td class="tg-0lax">Time (Search)</td>
+    <td class="tg-baqh">+</td>
+    <td class="tg-baqh">-</td>
+    <td class="tg-0lax">Automated does it for you</td>
+  </tr>
+  <tr>
+    <td class="tg-0lax">Output as Obj.</td>
+    <td class="tg-baqh">+</td>
+    <td class="tg-baqh">-</td>
+    <td class="tg-0lax">Output can be used as `i`</td>
+  </tr>
+  <tr>
+    <td class="tg-0lax">Thematic</td>
+    <td class="tg-baqh">+</td>
+    <td class="tg-baqh">-</td>
+    <td class="tg-0lax">Paper is about programming</td>
+  </tr>
+  <tr>
+    <td class="tg-0lax">Missed Links</td>
+    <td class="tg-baqh">+</td>
+    <td class="tg-baqh">-</td>
+    <td class="tg-0lax">Code will try every possible option</td>
+  </tr>
+  <tr>
+    <td class="tg-0lax">Volume per TIme</td>
+    <td class="tg-baqh">+</td>
+    <td class="tg-baqh">-</td>
+    <td class="tg-0lax">Code will scan more in same time</td>
+  </tr>
+  <tr>
+    <td class="tg-0lax">False pos/neg</td>
+    <td class="tg-baqh">+</td>
+    <td class="tg-baqh">-</td>
+    <td class="tg-0lax">Code won't mistake a 0 for other `n`</td>
+  </tr>
+</tbody>
+</table>
+
+
+The matter of time brings up another point. Currently, I have no estimate for
+how long anything will take to run. While this isn't a problem for smaller code
+chunks, it may become a major factor in the full-scale scraper/miner. My laptop
+isn't built to handle that kind of network or memory load, and I can't use the
+GAI servers without my Dell, so this *needs to work* when I scale up. I
+literally cannot run this repeatedly, I just do not have that kind of time on my
+hands.
+
+Time benchmarking is a faster fix, so that'll come first.
+
+## Time Benchmarks
+There are two options for measuring time elapsed during execution.
+
+    1       Sys.time()
+    2       system.time(FUNC())
+
+`Sys.time()` returns the current time.
+```{r sys.time()}
+Sys.time()
+```
+
+`system.time(FUNC())` returns the execution time of some arbitrary function
+FUNC(). It looses the output of the argument.
+
+```{r system.time()}
+system.time(TEST(200))
+```
+
+Current plan. Capture a timestamp at the beginning of execution. Capture another
+at the end. Find the difference!
+```{r Time Example}
+# Capture first time stamp
+test_time_a <- Sys.time()
+
+# Wait for 20 seconds
+Sys.sleep(5)
+
+# Capture last time stamp
+test_time_b <- Sys.time()
+
+# Find difference
+test_time_b - test_time_a
+```
+
+Now, adding `Sys.time()` directly to the function seems unnecessary. I don't
+want to complicate things by adding more outputs to a function, plus I don't
+really care how long it takes to capture the individual page. I'm more
+interested in how long it takes to complete the full routine. Benchmarking
+should then take place at the highest possible level.
+
+## Time Estimating
+I can, however, use `system.time()` in a loop to estimate how long a full-scale
+execution might look. I can't do it quite yet — I don't have the upper bounds
+that I'm estimating for — but I can keep it in my pocket.
+
+# Third Draft
+The project having been delayed for some time now, I find myself *overwhelmingly
+confused by my lack of organization* (shocker)
+
+Here's a rough outline of how the code should break down.
+
+```{r Scraper Outline, eval=FALSE}
+#phi_no is known in advance, or used to iterate the loop
+#no need to define it, just add it into the mix during MakeEntry()
+#idk what to do about the header yet so
+Scrape(phi_no=1, dirty=F, remove_accent=T) =>
+
+  # Find page for scraping
+  page <- MakePage(phi_no)
+  
+  # Scrape relevant data + identifying materials
+  text <- ReadText(page)
+  ig_book <- ReadBook(page)
+  ig_no <- ReadNo(page)
+  header <- ReadHeader(page)
+  
+  # Clean data of editorial marks
+  if (dirty=F) {
+    text <- Clean(text)
+  }
+  
+  # Clean data of accentual marks
+  if (remove_accent=T) {
+    no_accent <- RemoveAccent(text)
+  } else {
+    no_accent <- NA
+  }
+  
+  # Make entry to be passed to tibble `data`
+  entry <- MakeEntry(ig_book, ig_no, phi_no, text, duplicate, link)
+  Return(entry)
+  
+# ---------------------------------------------------------
+# Tibble `data` to be processed
+data <- tibble(ig_book = NA, ig_no = NA, phi_no = NA, text = NA, duplicate = NA, link = NA)
+
+# --------------------------------------------------------- 
+# Master loop which creates the tibble
+CollectData() =>
+  for (i in c(1:n)) {
+    data[i,] <- Scrape(phi_no, dirty=F, duplicate=T)
+  }
+```
+
 
