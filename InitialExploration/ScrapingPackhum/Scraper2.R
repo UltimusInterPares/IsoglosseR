@@ -36,7 +36,7 @@ print(text)
 
 ### SCRAPER --------------------------------------------------------------------
 
-# testing bad selector paths ---------------------------------------------------
+# testing bad links ---------------------------------------------------
 link <- 'https://inscriptions.packhum.org/text/0'
 page <- read_html(link)
 
