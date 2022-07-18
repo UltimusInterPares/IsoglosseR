@@ -425,3 +425,6 @@ CollectData() =>
 ```
 
 
+Okay it's going to take 13 hours to run. So. Let's run a test scrape.
+
+I'm going to try and grab all of Book 7...
