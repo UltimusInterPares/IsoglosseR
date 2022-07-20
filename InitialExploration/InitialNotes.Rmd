@@ -492,6 +492,54 @@ confusing in their variety for a computer. I need to convert each into two
 variables: `date_after` and `date_before`. I will then return each for their own
 column.
 
+First things first. The IG occasionally presents dates in "Xth c." format, which
+is thoroughly incompatible with the rest of the data. I have written a short
+function to "translate" these into usable data.
+
+First, the script determines if a date is in the incorrect format.
+The function `grepl()`, despite looking like it wants to `repl`ace something,
+only actually searches for a pattern, then returns a `TRUE/FALSE` result
+depending on whether or not it finds that pattern. If the search returns
+`TRUE`, then the function captures the number from that date and stores it as
+the variable `cen` (`cen`tury). The function then adds two trailing zeroes, and
+subtracts a hundred to make a usable date.
+
+Century dates are often described as "early", "middle"/"mid", or "late."
+In my testing, I have almost unanimously seen a modifier followed by a single
+date identifier. Therefore, if a modifier is present, the code returns a single
+date. If no modifier is present, the code returns the entire century as a date
+range (YYY-YYY). 
+
+If the function notices one of these modifiers, then it adds some time onto the
+date. For an "early" date, it adds nothing. For a "mid" date, it adds 50 years.
+For a "late" date, 99 years. 
+
+```{r TRANSLATE CENTURIES, eval=FALSE, include=TRUE}
+
+TranslateCentury <- function(header) {
+  grepl("(\\d+)(?=\\w{2} c.)", header, perl = T)
+  cen_start <- str_extract(header, "(\\d+)(?=\\w{2} c.)")
+  cen_start <- paste(cen_start, "00", sep="") %>%
+    as.integer()
+  
+  cen_end <- cen_start - 99
+  
+  if (grepl("(?<=early )(\\d+)(?=\\w{2} c.)", header, perl = T)) {
+    return(cen_start)
+  } else if (grepl("(?<=late )(\\d+)(?=\\w{2} c.)", header, perl = T)) {
+    cen_start <- cen_start - 99
+    return(cen_start)
+  } else if (grepl("(?<=mid )(\\d+)(?=\\w{2} c.)", header, perl = T)) {
+    cen_start <- cen_start - 50
+    return(cen_start)
+  } else {
+    cen <- paste(cen_start, cen_end, sep="-")
+    return(cen)
+  }
+
+}
+```
+
 The code for both dates are paralleled. I have built each around an `if-else`
 function, which searches for possible dates in a number of formats (currently 2,
 third in prog).
@@ -502,7 +550,9 @@ ReadDateAfter <- function(header) {
     date_after <- str_extract(header, "\\d+(?=-)")
   } else if (grepl("(?<=after )\\d+", header, perl = T)) {
     date_after <- str_extract(header, "(?<=after )\\d+")
-  }
+  }  else if (grepl("(?<=— )(\\d+)(?= BC)", header, perl = T)) {
+    date_after <- str_extract(header, "(?<=— )(\\d+)(?= BC)")
+  } else {date_after <- NA}
   return(date_after)
 }
 
@@ -511,15 +561,13 @@ ReadDateBefore <- function(header) {
     date_before <- str_extract(header, "(?<=-)\\d+")
   } else if (grepl("(?<=before )\\d+", header, perl = T)) {
     date_before <- str_extract(header, "(?<=before )\\d+")
-  }
+  } else if (grepl("(?<=— )(\\d+)(?= BC)", header, perl = T)) {
+    date_before <- str_extract(header, "(?<=— )(\\d+)(?= BC)")
+  } else {date_before <- NA}
   return(date_before)
 }
 ```
 
-
-The function `grepl()`, despite looking like it wants to `repl`ace something,
-only actually searches for a pattern, then returns a `TRUE/FALSE` result
-depending on whether or not it finds that pattern.
 
 The pattern grepl `\\d+-\\d+` searches for two digits (`\\d+`) separated by
 a dash `-`. This is the first test used in both `ReadDateAfter` and
@@ -538,7 +586,6 @@ following numbers. It is *excruciatingly* important that the space between
 "after/before" and the date is included in the lookaround, or else RegEx will
 expect to see the phrase crammed right against the date. *It cannot interpret
 the search expression, it must receive exactly what you want to search for!*
-
 
 
 
