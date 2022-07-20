@@ -9,6 +9,8 @@
   # page
   # header
   # cities
+  # cen_start
+  # cen_end
   # date_after
   # date_before
   # text
