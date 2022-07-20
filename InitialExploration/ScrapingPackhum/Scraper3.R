@@ -44,6 +44,9 @@ CleanHeader <- function(header) {
   header <- gsub("#", "", header, perl=T)
   # ℎ PLANCK CONSTANT Unicode: U+210E, UTF-8: E2 84 8E
   header <- gsub("ℎ", "h", header, perl=T)
+  
+  # not bef. > after
+  header <- gsub("not bef.", "after", header, perl=T)
   return(header)
 }
 
@@ -55,12 +58,45 @@ ReadLocation <- function(header) {
   return(location)
 }
 
+################################################################################
+# WIP
+
+TranslateCentury <- function(header) {
+  grepl("(\\d+)(?=\\w{2} c.)", header, perl = T)
+  cen_start <- str_extract(header, "(\\d+)(?=\\w{2} c.)")
+  cen_start <- paste(cen_start, "00", sep="") %>%
+    as.integer()
+  
+  cen_end <- cen_start - 99
+  
+  if (grepl("(?<=early )(\\d+)(?=\\w{2} c.)", header, perl = T)) {
+    header <- gsub("(?>early|mid|late) (\\d+)(?>\\w{2} c.)", cen_start, header, perl = T)
+    return(header)
+  } else if (grepl("(?<=late )(\\d+)(?=\\w{2} c.)", header, perl = T)) {
+    cen_start <- cen_start - 99
+    header <- gsub("(?>early|mid|late) (\\d+)(?>\\w{2} c.)", cen_start, header, perl = T)
+    return(header)
+    #return(cen_start)
+  } else if (grepl("(?<=mid )(\\d+)(?=\\w{2} c.)", header, perl = T)) {
+    cen_start <- cen_start - 50
+    header <- gsub("(?>early|mid|late) (\\d+)(?>\\w{2} c.)", cen_start, header, perl = T)
+    return(header)
+    #return(cen_start)
+  } else {
+    cen <- paste(cen_start, cen_end, sep="-")
+    return(cen)
+  }
+  
+}
+
 ReadDateAfter <- function(header) {
   if (grepl("\\d+-\\d+", header, perl = T)) {
     date_after <- str_extract(header, "\\d+(?=-)")
   } else if (grepl("(?<=after )\\d+", header, perl = T)) {
     date_after <- str_extract(header, "(?<=after )\\d+")
-  }  else {date_after <- NA}
+  }  else if (grepl("(?<=— )(\\d+)(?= BC)", header, perl = T)) {
+    date_after <- str_extract(header, "(?<=— )(\\d+)(?= BC)")
+  } else {date_after <- NA}
   return(date_after)
 }
 
@@ -69,9 +105,13 @@ ReadDateBefore <- function(header) {
     date_before <- str_extract(header, "(?<=-)\\d+")
   } else if (grepl("(?<=before )\\d+", header, perl = T)) {
     date_before <- str_extract(header, "(?<=before )\\d+")
+  } else if (grepl("(?<=— )(\\d+)(?= BC)", header, perl = T)) {
+    date_before <- str_extract(header, "(?<=— )(\\d+)(?= BC)")
   } else {date_before <- NA}
   return(date_before)
 }
+
+################################################################################
 
 ReadText <- function(page) {
   text <- page %>% html_nodes('div.greek.text-nowrap.dblclk') %>% html_text()
@@ -122,6 +162,7 @@ ScrapeTest <- function(phi_no=1) {
   # Location and Dates
   header <- ReadHeader(page)
   header <- CleanHeader(header)
+  #header <- TranslateCentury(header)
   location <- ReadLocation(header)
   date_after <- ReadDateAfter(header)
   date_before <- ReadDateBefore(header)
