@@ -8,12 +8,16 @@
   # link
   # page
   # header
+  # cities
+  # date_after
+  # date_before
   # text
   # ig_book
   # ig_no
   
 ### PACKAGES -------------------------------------------------------------------
 library(dplyr)
+library(stringr)
 library(rvest)
 library(ggplot2)
 library(progress)
@@ -40,8 +44,34 @@ CleanHeader <- function(header) {
   header <- gsub("#", "", header, perl=T)
   # ℎ PLANCK CONSTANT Unicode: U+210E, UTF-8: E2 84 8E
   header <- gsub("ℎ", "h", header, perl=T)
+  return(header)
 }
-  
+
+cities <- "(Megara|Pagae|Aegosthena|Oropus|Tanagra|Eleusis|Athens)"
+
+ReadLocation <- function(header) {
+  header <- gsub("Ath.", "Athens", header, ignore.case = T, perl = T)
+  location <- str_extract(header, cities)
+  return(location)
+}
+
+ReadDateAfter <- function(header) {
+  if (grepl("\\d+-\\d+", header, perl = T)) {
+    date_after <- str_extract(header, "\\d+(?=-)")
+  } else if (grepl("(?<=after )\\d+", header, perl = T)) {
+    date_after <- str_extract(header, "(?<=after )\\d+")
+  }  else {date_after <- NA}
+  return(date_after)
+}
+
+ReadDateBefore <- function(header) {
+  if (grepl("\\d+-\\d+", header, perl = T)) {
+    date_before <- str_extract(header, "(?<=-)\\d+")
+  } else if (grepl("(?<=before )\\d+", header, perl = T)) {
+    date_before <- str_extract(header, "(?<=before )\\d+")
+  } else {date_before <- NA}
+  return(date_before)
+}
 
 ReadText <- function(page) {
   text <- page %>% html_nodes('div.greek.text-nowrap.dblclk') %>% html_text()
@@ -71,8 +101,8 @@ ReadNo <- function(page) {
   #ig_no < gsub("\\n", "", ig_no)
 }
 
-MakeEntry <- function(ig_book, ig_no, phi_no, header, text) {
-  entry <- c(ig_book, ig_no, phi_no, header, text)
+MakeEntry <- function(ig_book, ig_no, phi_no, header, location, date_after, date_before, text) {
+  entry <- c(ig_book, ig_no, phi_no, header, location, date_after, date_before, text)
   return(as.list(entry))
 }
 
@@ -89,18 +119,37 @@ ScrapeTest <- function(phi_no=1) {
   ig_book <- ReadBook(page)
   ig_no <- ReadNo(page)
   
+  # Location and Dates
   header <- ReadHeader(page)
   header <- CleanHeader(header)
+  location <- ReadLocation(header)
+  date_after <- ReadDateAfter(header)
+  date_before <- ReadDateBefore(header)
   
-  entry <- MakeEntry(ig_book, ig_no, phi_no, header, text)
+  
+  entry <- MakeEntry(ig_book,
+                     ig_no,
+                     phi_no,
+                     header,
+                     location,
+                     date_after,
+                     date_before,
+                     text)
   return(entry)
 }
 
 ### THE TIBBLE -----------------------------------------------------------------
-test_df <- tibble(ig_book = NA, ig_no = NA, phi_no = NA, header = NA, text = NA)
+test_df <- tibble(ig_book = NA,
+                  ig_no = NA,
+                  phi_no = NA,
+                  header = NA,
+                  location = NA,
+                  date_after = NA,
+                  date_before = NA,
+                  text = NA)
 
 ### TESTING --------------------------------------------------------------------
-scrape_total <- 10
+scrape_total <- 50
 
 pb <- pb <- progress_bar$new(
   format = "  scraping PackHum [:bar] :percent eta: :eta (:spin)",
