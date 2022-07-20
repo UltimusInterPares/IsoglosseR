@@ -428,3 +428,119 @@ CollectData() =>
 Okay it's going to take 13 hours to run. So. Let's run a test scrape.
 
 I'm going to try and grab all of Book 7...
+
+Hey it worked!
+
+## Headers
+The script needs the ability to determine the location of an inscription and its
+date range. To do so, the script first grabs the "header" from each page, then
+cleans it of editorial marks (but not numbers!)
+
+```{r HEADERS, eval=FALSE, include=TRUE}
+ReadHeader <- function(page) {
+  header <- page %>% html_nodes('div.tildeinfo.light') %>% html_text()
+  return(header)
+}
+
+CleanHeader <- function(header) {
+  header <- gsub("[\\[\\]]", "", header, perl=T)
+  header <- gsub("(\\-\\n{1,})", "", header, perl=T)
+  header <- gsub("\\n{1,}", " ", header, perl=T)
+  header <- gsub("\\s{1,}", " ", header, perl=T)
+  # ̣COMBINING DOT BELOW Unicode: U+0323, UTF-8: CC A3
+  header <- gsub("̣", "", header, perl=T)
+  header <- gsub("#", "", header, perl=T)
+  # ℎ PLANCK CONSTANT Unicode: U+210E, UTF-8: E2 84 8E
+  header <- gsub("ℎ", "h", header, perl=T)
+  return(header)
+}
+```
+
+The editors made the headers easy for a person to read, but they are not nearly
+standardized enough for a computer. However, each header generally has the two
+most important pieces of information: the location, and the date(s).
+
+### Locations
+Locations are easy enough to find. I am targeting known ranges in the IG for my
+data, so I won't need to worry too much about errant locations emerging in the
+data set. I can therefore make a variable `cities` which contains a RegEx string
+that will identify the key cities (and only the key cities). I can then pass
+this to `str_extract()`, and return the output as the variable `location`. This
+method does hamper modularity, but it fits for the scope of the project.
+
+Some cities are sometimes abbreviated in the header. The function
+`ReadLocation` accordingly begins with a `gsub` command that spells out the
+abbreviated city name.
+
+```{r GRABBING LOCATIONS, eval=FALSE, include=TRUE}
+cities <- "(Megara|Pagae|Aegosthena|Oropus|Tanagra|Eleusis|Athens)"
+
+ReadLocation <- function(header) {
+  header <- gsub("Ath.", "Athens", header, ignore.case = T, perl = T)
+  location <- str_extract(header, cities)
+  return(location)
+}
+```
+
+So far, I have only seen the abbreviation "Ath." for "Athens", and so I have
+only programmed for that one specifically.
+
+### Dates
+Dates are rather more difficult. The IG uses convenient shorthands — before 
+3rd c. BC, Roman Era, 500-510, etc. — which are legible for a person but
+confusing in their variety for a computer. I need to convert each into two
+variables: `date_after` and `date_before`. I will then return each for their own
+column.
+
+The code for both dates are paralleled. I have built each around an `if-else`
+function, which searches for possible dates in a number of formats (currently 2,
+third in prog).
+
+```{r GET DATES, eval=FALSE, include=TRUE}
+ReadDateAfter <- function(header) {
+  if (grepl("\\d+-\\d+", header, perl = T)) {
+    date_after <- str_extract(header, "\\d+(?=-)")
+  } else if (grepl("(?<=after )\\d+", header, perl = T)) {
+    date_after <- str_extract(header, "(?<=after )\\d+")
+  }
+  return(date_after)
+}
+
+ReadDateBefore <- function(header) {
+  if (grepl("\\d+-\\d+", header, perl = T)) {
+    date_before <- str_extract(header, "(?<=-)\\d+")
+  } else if (grepl("(?<=before )\\d+", header, perl = T)) {
+    date_before <- str_extract(header, "(?<=before )\\d+")
+  }
+  return(date_before)
+}
+```
+
+
+The function `grepl()`, despite looking like it wants to `repl`ace something,
+only actually searches for a pattern, then returns a `TRUE/FALSE` result
+depending on whether or not it finds that pattern.
+
+The pattern grepl `\\d+-\\d+` searches for two digits (`\\d+`) separated by
+a dash `-`. This is the first test used in both `ReadDateAfter` and
+`ReadDateBefore`. If a simple date range is found, then `ReadDateAfter` grabs
+the number before the dash using a *positive lookahead* `(?=<char>)` — i.e., the
+code will only grab the number if it is followed by the character `<char>`
+(here, a dash `-`). `ReadDateBefore` performs a similar function to simple
+dates, but grabs the digit after the dash, using a *positive lookbehind*
+`(?<=<char>)`. There can be multiple different numbers in the heading, so I
+have added lookarounds (-ahead, -behind) to make sure that the code returns the
+proper variables.
+
+If the first test fails — i.e., there are no simple dates in YYY-YYY format —
+then the functions look for either "after " or "before ", then grabs the
+following numbers. It is *excruciatingly* important that the space between
+"after/before" and the date is included in the lookaround, or else RegEx will
+expect to see the phrase crammed right against the date. *It cannot interpret
+the search expression, it must receive exactly what you want to search for!*
+
+
+
+
+
+
