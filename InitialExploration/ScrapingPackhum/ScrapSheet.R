@@ -17,29 +17,32 @@ test_range_f <- "late 3rd c. BC"
 test_range_g <- "after 2nd c. BC "
 
 TranslateCentury <- function(header) {
-  grepl("(\\d+)(?=\\w{2} c.)", header, perl = T)
-  cen_start <- str_extract(header, "(\\d+)(?=\\w{2} c.)")
-  cen_start <- paste(cen_start, "00", sep="") %>%
-    as.integer()
-  
-  cen_end <- cen_start - 99
-  
-  if (grepl("(?<=early )(\\d+)(?=\\w{2} c.)", header, perl = T)) {
-    header <- gsub("(?>early|mid|late) (\\d+)(?>\\w{2} c.)", cen_start, header, perl = T)
-    return(header)
-  } else if (grepl("(?<=late )(\\d+)(?=\\w{2} c.)", header, perl = T)) {
-    cen_start <- cen_start - 99
-    header <- gsub("(?>early|mid|late) (\\d+)(?>\\w{2} c.)", cen_start, header, perl = T)
-    return(header)
-    #return(cen_start)
-  } else if (grepl("(?<=mid )(\\d+)(?=\\w{2} c.)", header, perl = T)) {
-    cen_start <- cen_start - 50
-    header <- gsub("(?>early|mid|late) (\\d+)(?>\\w{2} c.)", cen_start, header, perl = T)
-    return(header)
-    #return(cen_start)
+  if (grepl("(\\d+)(?=\\w{2} c.)", header, perl = T)) {
+    cen_start <- str_extract(header, "(\\d+)(?=\\w{2} c.)")
+    cen_start <- paste(cen_start, "00", sep="") %>%
+      as.integer()
+    
+    cen_end <- cen_start - 99
+    
+    if (grepl("(?<=early )(\\d+)(?=\\w{2} c.)", header, perl = T)) {
+      header <- gsub("(?>early|mid|late) (\\d+)(?>\\w{2} c.)", cen_start, header, perl = T)
+      return(header)
+    } else if (grepl("(?<=late )(\\d+)(?=\\w{2} c.)", header, perl = T)) {
+      cen_start <- cen_start - 99
+      header <- gsub("(?>early|mid|late) (\\d+)(?>\\w{2} c.)", cen_start, header, perl = T)
+      return(header)
+      #return(cen_start)
+    } else if (grepl("(?<=mid )(\\d+)(?=\\w{2} c.)", header, perl = T)) {
+      cen_start <- cen_start - 50
+      header <- gsub("(?>early|mid|late) (\\d+)(?>\\w{2} c.)", cen_start, header, perl = T)
+      return(header)
+      #return(cen_start)
+    } else {
+      cen <- paste(cen_start, cen_end, sep="-")
+      header <- gsub("(\\d+)(?>\\w{2} c.)", cen, header, perl = T)
+      return(header)
+    }
   } else {
-    cen <- paste(cen_start, cen_end, sep="-")
-    header <- gsub("(\\d+)(?>\\w{2} c.)", cen, header, perl = T)
     return(header)
   }
 
