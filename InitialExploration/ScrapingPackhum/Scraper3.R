@@ -176,6 +176,7 @@ ReadText <- function(page) {
 
 Clean <- function(text) {
   text <- gsub("[\\d\\[\\]]", "", text, perl=T)
+  text <- gsub("[<>]", "", text, perl=T)
   text <- gsub("(\\-\\n{1,})", "", text, perl=T)
   text <- gsub("\\n{1,}", " ", text, perl=T)
   text <- gsub("\\s{1,}", " ", text, perl=T)
@@ -184,6 +185,47 @@ Clean <- function(text) {
   text <- gsub("#", "", text, perl=T)
   # ℎ PLANCK CONSTANT Unicode: U+210E, UTF-8: E2 84 8E
   text <- gsub("ℎ", "h", text, perl=T)
+  
+  text <- gsub("(ἀ|ἁ|ά|ὰ|ᾶ|ἄ|ἂ|ἆ|ἅ|ἃ|ἇ|ᾷ)",
+               "α",
+               text,
+               ignore.case = T)
+  text <- gsub("(ἠ|ἡ|ή|ὴ|ῆ|ἤ|ἢ|ἦ|ἥ|ἣ|ἧ|ῃ|ῂ|ῇ|ᾔ|ᾗ)",
+               "η",
+               text,
+               ignore.case = T)
+  text <- gsub("(ἰ|ἱ|ί|ὶ|ῖ|ἴ|ἲ|ἶ|ἵ|ἳ|ἷ)",
+               "ι",
+               text,
+               ignore.case = T)
+  text <- gsub("(ϊ|ΐ|ῒ)",
+               "ϊ",
+               text,
+               ignore.case = T)
+  text <- gsub("(ὠ|ὡ|ώ|ὼ|ῶ|ὤ|ὢ|ὦ|ὥ|ὣ|ὧ|ῳ|ῷ|ᾤ|ᾧ|ᾠ|ῴ)",
+               "ω",
+               text,
+               ignore.case = T)
+  text <- gsub("(ὐ|ὑ|ύ|ὺ|ῦ|ὔ|ὒ|ὖ|ὕ|ὓ|ὗ)",
+               "υ",
+               text,
+               ignore.case = T)
+  text <- gsub("(ΰ|ῢ|ϋ)",
+               "ϋ",
+               text,
+               ignore.case = T)
+  text <- gsub("(ἐ|ἑ|έ|ὲ|ἔ|ἒ|ἕ|ἓ)",
+               "ε",
+               text,
+               ignore.case = T)
+  text <- gsub("(ὀ|ὁ|ό|ὸ|ὄ|ὂ|ὅ|ὃ)",
+               "ο",
+               text,
+               ignore.case = T)
+  text <- gsub("(ῤ|ῥ)",
+               "ρ",
+               text,
+               ignore.case = T)
 }
 
 ReadBook <- function(page) {
@@ -246,7 +288,7 @@ test_df <- tibble(ig_book = NA,
                   text = NA)
 
 ### TESTING --------------------------------------------------------------------
-scrape_total <- 50
+scrape_total <- 10
 
 pb <- pb <- progress_bar$new(
   format = "  scraping PackHum [:bar] :percent eta: :eta (:spin)",

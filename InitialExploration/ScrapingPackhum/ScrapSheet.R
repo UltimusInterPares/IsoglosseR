@@ -69,3 +69,46 @@ ReadDateBefore <- function(header) {
   } #else {date_before <- NA}
   return(date_before)
 }
+
+
+#-------------------------------------------------------------------------------
+text <- gsub("(ἀ|ἁ|ά|ὰ|ᾶ|ἄ|ἂ|ἆ|ἅ|ἃ|ἇ|ᾷ)",
+             "α",
+             text,
+             ignore.case = T)
+text <- gsub("(ἠ|ἡ|ή|ὴ|ῆ|ἤ|ἢ|ἦ|ἥ|ἣ|ἧ|ῃ|ῂ|ῇ|ᾔ|ᾗ)",
+             "η",
+             text,
+             ignore.case = T)
+text <- gsub("(ἰ|ἱ|ί|ὶ|ῖ|ἴ|ἲ|ἶ|ἵ|ἳ|ἷ)",
+             "ι",
+             text,
+             ignore.case = T)
+text <- gsub("(ϊ|ΐ|ῒ)",
+             "ϊ",
+             text,
+             ignore.case = T)
+text <- gsub("(ὠ|ὡ|ώ|ὼ|ῶ|ὤ|ὢ|ὦ|ὥ|ὣ|ὧ|ῳ|ῷ|ᾤ|ᾧ|ᾠ|ῴ)",
+             "ω",
+             text,
+             ignore.case = T)
+text <- gsub("(ὐ|ὑ|ύ|ὺ|ῦ|ὔ|ὒ|ὖ|ὕ|ὓ|ὗ)",
+             "υ",
+             text,
+             ignore.case = T)
+text <- gsub("(ΰ|ῢ|ϋ)",
+             "ϋ",
+             text,
+             ignore.case = T)
+text <- gsub("(ἐ|ἑ|έ|ὲ|ἔ|ἒ|ἕ|ἓ)",
+             "ε",
+             text,
+             ignore.case = T)
+text <- gsub("(ὀ|ὁ|ό|ὸ|ὄ|ὂ|ὅ|ὃ)",
+             "ο",
+             text,
+             ignore.case = T)
+text <- gsub("(ῤ|ῥ)",
+             "ρ",
+             text,
+             ignore.case = T)
