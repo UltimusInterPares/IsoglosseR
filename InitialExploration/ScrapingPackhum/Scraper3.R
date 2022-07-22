@@ -23,6 +23,7 @@ library(stringr)
 library(rvest)
 library(ggplot2)
 library(progress)
+library(stringi) # For gettung UTF8 codes out of char.'s
  
 ### DEFINING COMPONENTS FOR Scrape() -------------------------------------------
 MakePage <- function(phi_no) {
@@ -59,59 +60,6 @@ ReadLocation <- function(header) {
   location <- str_extract(header, cities)
   return(location)
 }
-
-################################################################################
-# WIP
-
-# TranslateCentury <- function(header) {
-#   grepl("(\\d+)(?=\\w{2} c.)", header, perl = T)
-#   cen_start <- str_extract(header, "(\\d+)(?=\\w{2} c.)")
-#   cen_start <- paste(cen_start, "00", sep="") %>%
-#     as.integer()
-#   
-#   cen_end <- cen_start - 99
-#   
-#   if (grepl("(?<=early )(\\d+)(?=\\w{2} c.)", header, perl = T)) {
-#     header <- gsub("(?>early|mid|late) (\\d+)(?>\\w{2} c.)", cen_start, header, perl = T)
-#     return(header)
-#   } else if (grepl("(?<=late )(\\d+)(?=\\w{2} c.)", header, perl = T)) {
-#     cen_start <- cen_start - 99
-#     header <- gsub("(?>early|mid|late) (\\d+)(?>\\w{2} c.)", cen_start, header, perl = T)
-#     return(header)
-#     #return(cen_start)
-#   } else if (grepl("(?<=mid )(\\d+)(?=\\w{2} c.)", header, perl = T)) {
-#     cen_start <- cen_start - 50
-#     header <- gsub("(?>early|mid|late) (\\d+)(?>\\w{2} c.)", cen_start, header, perl = T)
-#     return(header)
-#     #return(cen_start)
-#   } else {
-#     cen <- paste(cen_start, cen_end, sep="-")
-#     return(cen)
-#   }
-#   
-# }
-# 
-# ReadDateAfter <- function(header) {
-#   if (grepl("\\d+-\\d+", header, perl = T)) {
-#     date_after <- str_extract(header, "\\d+(?=-)")
-#   } else if (grepl("(?<=after )\\d+", header, perl = T)) {
-#     date_after <- str_extract(header, "(?<=after )\\d+")
-#   }  else if (grepl("(?<=— )(\\d+)(?= BC)", header, perl = T)) {
-#     date_after <- str_extract(header, "(?<=— )(\\d+)(?= BC)")
-#   } else {date_after <- NA}
-#   return(date_after)
-# }
-# 
-# ReadDateBefore <- function(header) {
-#   if (grepl("\\d+-\\d+", header, perl = T)) {
-#     date_before <- str_extract(header, "(?<=-)\\d+")
-#   } else if (grepl("(?<=before )\\d+", header, perl = T)) {
-#     date_before <- str_extract(header, "(?<=before )\\d+")
-#   } else if (grepl("(?<=— )(\\d+)(?= BC)", header, perl = T)) {
-#     date_before <- str_extract(header, "(?<=— )(\\d+)(?= BC)")
-#   } else {date_before <- NA}
-#   return(date_before)
-# }
 
 TranslateCentury <- function(header) {
   if (grepl("(\\d+)(?=\\w{2} c.)", header, perl = T)) {
@@ -186,7 +134,7 @@ Clean <- function(text) {
   # ℎ PLANCK CONSTANT Unicode: U+210E, UTF-8: E2 84 8E
   text <- gsub("ℎ", "h", text, perl=T)
   
-  text <- gsub("(ἀ|ἁ|ά|ὰ|ᾶ|ἄ|ἂ|ἆ|ἅ|ἃ|ἇ|ᾷ)",
+  text <- gsub("(ἀ|ἁ|ά|ὰ|ᾶ|ἄ|ἂ|ἆ|ἅ|ἃ|ἇ|ᾷ|ά)",
                "α",
                text,
                ignore.case = T)
@@ -194,15 +142,15 @@ Clean <- function(text) {
                "η",
                text,
                ignore.case = T)
-  text <- gsub("(ἰ|ἱ|ί|ὶ|ῖ|ἴ|ἲ|ἶ|ἵ|ἳ|ἷ)",
+  text <- gsub("(ἰ|ἱ|ί|ὶ|ῖ|ἴ|ἲ|ἶ|ἵ|ἳ|ἷ|ί)",
                "ι",
                text,
                ignore.case = T)
-  text <- gsub("(ϊ|ΐ|ῒ)",
-               "ϊ",
+  text <- gsub("(ϊ|ΐ|ῒ|ΐ)",
+               "ι",
                text,
                ignore.case = T)
-  text <- gsub("(ὠ|ὡ|ώ|ὼ|ῶ|ὤ|ὢ|ὦ|ὥ|ὣ|ὧ|ῳ|ῷ|ᾤ|ᾧ|ᾠ|ῴ)",
+  text <- gsub("(ὠ|ὡ|ώ|ὼ|ῶ|ὤ|ὢ|ὦ|ὥ|ὣ|ὧ|ῳ|ῷ|ᾤ|ᾧ|ᾠ|ῴ|ώ)",
                "ω",
                text,
                ignore.case = T)
@@ -210,15 +158,15 @@ Clean <- function(text) {
                "υ",
                text,
                ignore.case = T)
-  text <- gsub("(ΰ|ῢ|ϋ)",
-               "ϋ",
+  text <- gsub("(ΰ|ῢ|ϋ|ύ|ϋ)",
+               "υ",
                text,
                ignore.case = T)
-  text <- gsub("(ἐ|ἑ|έ|ὲ|ἔ|ἒ|ἕ|ἓ)",
+  text <- gsub("(ἐ|ἑ|έ|ὲ|ἔ|ἒ|ἕ|ἓ|έ)",
                "ε",
                text,
                ignore.case = T)
-  text <- gsub("(ὀ|ὁ|ό|ὸ|ὄ|ὂ|ὅ|ὃ)",
+  text <- gsub("(ὀ|ὁ|ό|ὸ|ὄ|ὂ|ὅ|ὃ|ό)",
                "ο",
                text,
                ignore.case = T)
