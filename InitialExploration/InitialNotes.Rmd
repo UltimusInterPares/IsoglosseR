@@ -604,3 +604,8 @@ The key difference here is that accents are already stripped away. Plus, I have
 included a few characters that Perseus either avoids or doesn't publicize the
 code for. Digamma, for instance, is already coded into the Perseus Project as
 "v/V".
+
+### QUICK NOTES THOMAS WRITE THIS OUT IN FULL LATER
+- GrkToLat() turns Greek text into Latin text (transcription)
+- LatToGrk() turns Latin text into Greek text (transcription)
+- Search() takes a data frame (df), then searches for a target segment (target). The target includes either a dummy consonant C or dummy vowel V. Then two hypothetical phones (hyp1 and hyp2) are substituted for C/V. Search then looks for both in the data set, and returns matches for each.
