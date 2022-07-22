@@ -112,3 +112,27 @@ text <- gsub("(ῤ|ῥ)",
              "ρ",
              text,
              ignore.case = T)
+
+
+Search <- function(df, target, hyp1, hyp2) {
+  target1 <- gsub("[CV]", GrkToLat(hyp1), GrkToLat(target))
+  target2 <- gsub("[CV]", GrkToLat(hyp2), GrkToLat(target))
+  
+  #df1 <- df %>% filter(str_detect(text, target1) == T)
+  #df2 <- df %>% filter(str_detect(text, target2) == T)
+  
+  df1 <- df %>% filter(str_detect(GrkToLat(text), target1) == T)
+  df2 <- df %>% filter(str_detect(GrkToLat(text), target2) == T)
+  
+  print(c("hyp1:", target, hyp1))
+  print(df1)
+  print(c("hyp2:", target, hyp2))
+  print(df2)
+  
+}
+
+"[^\\x00-\\x7F]+"
+
+test_numbers <- "²⁶"
+grepl("\\d*", test_numbers)
+str_extract(test_numbers, "\\d*") %>% print()
