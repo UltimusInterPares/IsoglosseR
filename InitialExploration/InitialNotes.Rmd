@@ -587,7 +587,20 @@ following numbers. It is *excruciatingly* important that the space between
 expect to see the phrase crammed right against the date. *It cannot interpret
 the search expression, it must receive exactly what you want to search for!*
 
+### Encoding
+Now, Regular Expression does not meld well with Greek letters. This is to be
+expected: after all, the system was designed in the 50's, well before computers
+were able to handle anything out of the Latin ASCII table. This may seem damning
+on the surface, but the fix is simple if somewhat inelegant. 
 
+I'm going to copy Perseus here. All text will be transcribed into the Latin
+alphabet during processing, then converted back to the Greek alphabet for
+presentation. For simplicity, I am ripping the encoding scheme from the Perseus
+project.
 
+<img src="http://www.perseus.tufts.edu/img/keyCaps.gif" alt="Italian Trulli">
 
-
+The key difference here is that accents are already stripped away. Plus, I have
+included a few characters that Perseus either avoids or doesn't publicize the
+code for. Digamma, for instance, is already coded into the Perseus Project as
+"v/V".
